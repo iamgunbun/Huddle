@@ -1,0 +1,269 @@
+@use 'sass:color';
+@use '@material/theme/color-palette';
+
+// Svelte Colors! Updated to deep dark theme with green/gold accents
+@use '@material/theme/index' as theme with (
+  $primary: #04351e,
+  $secondary: #eebf1c,
+  $surface: #0b0e14,
+  $background: #0b0e14,
+  $error: color-palette.$red-900,
+);
+
+// Import all the styles for the classes.
+@use '@material/typography/mdc-typography';
+@use '@material/typography/index' as typography;
+
+:root {
+  /* Modern Dark Theme & Glassmorphism Palette */
+  --bg-main: #0b0e14;
+  --bg-card: rgba(22, 28, 38, 0.7);
+  --accent-primary: #04351e;
+  --accent-secondary: #eebf1c;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --neon-glow: 0 0 15px rgba(238, 191, 28, 0.3);
+
+  /* Legacy Svelte Template Variables - Inverted for Dark Mode Compatibility */
+  --fff: #0b0e14; 
+  --fffTransparent: rgba(11, 14, 20, 0);
+  --f8f8f8: #11151d;
+  --f3f3f3: #161c26;
+  --eee: #1e2634;
+  --ebebeb: #242c3c;
+  --ddd: #334155;
+  --d7d7d7: #475569;
+  --ccc: #64748b;
+  --bbb: #94a3b8;
+  --aaa: #cbd5e1;
+  --g999: #e2e8f0;
+  --g555: #f1f5f9;
+  --g444: #f8fafc;
+  --g333: #ffffff;
+  --g111: #ffffff;
+  --g000: #ffffff;
+  
+  --boxShadowOne: rgba(0,0,0,0.5);
+  --boxShadowTwo: rgba(0,0,0,0.6);
+  --boxShadowThree: rgba(0,0,0,0.7);
+  --ir: #1e2634;
+  --champShadow: #000;
+  --transactHeader: #161c26;
+  --draftSwapped: #161c26;
+  --waiverAdd: rgba(4, 53, 30, 0.3);
+  --waiverDrop: rgba(255, 60, 60, 0.15);
+  --bracketMatch: #11151d;
+  --matchupSelected: #1e2634;
+  
+  --fadeOne: rgba(11, 14, 20, 0) 0%;
+  --fadeTwo: rgba(11, 14, 20, 0.7) 50%;
+  --fadeThree: rgba(11, 14, 20, 0.9) 90%;
+  --fadeFour: rgba(11, 14, 20, 1) 100%;
+  
+  --blueOne: #04351e;
+  --blueTwo: #eebf1c;
+  --r1: #11151d;
+  --r2: #161c26;
+  --r3: #1e2634;
+  --headerPrimary: rgba(4, 53, 30, 0.4);
+  --borderOverride: rgba(255, 255, 255, 0.12);
+  --rivalryBack: #0b0e14;
+
+  /* Chart bar colors */
+  --barChartOne: #eebf1c;
+  --barChartTwo: #d6ab17;
+  --barChartThree: #bd9713;
+  --barChartFour: #04351e;
+  --barChartFive: #054a29;
+  --barChartSix: #065e34;
+
+  /* Comparisson bar colors */
+  --compBarOne: #eebf1c;
+  --compBarTwo: #04351e;
+  --compBarOneText: #111;
+  --compBarTwoText: #fff;
+
+  /* Positions */
+  --QBfade: rgba(255, 143, 178, 0.3);
+  --WRfade: rgba(175, 212, 255, 0.3);
+  --RBfade: rgba(108, 202, 193, 0.3);
+  --TEfade: rgba(255, 214, 170, 0.3);
+  --Kfade: rgba(222, 180, 255, 0.3);
+  --DEfadeFfade: rgba(255, 251, 188, 0.3);
+  --PICKSfade: rgba(115, 182, 71, 0.3);
+  --CBfade: rgba(255, 204, 122, 0.3);
+  --SSfade: rgba(183, 161, 219, 0.3);
+  --FSfade: rgba(235, 231, 179, 0.3);
+  --DEfade: rgba(177, 208, 233, 0.3);
+  --DLfade: rgba(195, 146, 211, 0.3);
+  --LBfade: rgba(152, 192, 151, 0.3);
+
+	--QB: #ff2a6d;
+	--WR: #58a7ff;
+	--RB: #00ceb8;
+	--TE: #ffae58;
+	--K: #bd66ff;
+	--Budget: #7947d4;
+	--DEF: #eee45e;
+	--DL: #ff795a;
+	--LB: #6d7df5;
+	--DB: #ff7cb6;
+	--BN: #b6d0eb;
+}
+
+html,
+body {
+  position: relative;
+  margin: 0;
+  background-color: var(--bg-main) !important;
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(4, 53, 30, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(238, 191, 28, 0.05) 0%, transparent 40%);
+}
+ 
+html { @include typography.typography('body1'); }
+h1 { @include typography.typography('headline1'); }
+h2 { @include typography.typography('headline2'); }
+h3 { @include typography.typography('headline3'); }
+h4 { @include typography.typography('headline4'); }
+h5 { @include typography.typography('headline5'); }
+h6 { @include typography.typography('headline6'); }
+caption { @include typography.typography('caption'); }
+
+/* ---------------------------------------------------------
+   Typography Visibility Fixes
+--------------------------------------------------------- */
+.mdc-typography--headline1,
+.mdc-typography--headline2,
+.mdc-typography--headline3,
+.mdc-typography--headline4,
+.mdc-typography--headline5,
+.mdc-typography--headline6,
+.mdc-typography--subtitle1,
+.mdc-typography--subtitle2,
+.mdc-typography--body1,
+.mdc-typography--body2,
+.mdc-typography--caption,
+.mdc-card p, 
+.mdc-card span {
+  color: var(--text-main, #f8fafc) !important; 
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.02em;
+  background: linear-gradient(to right, #fff, var(--text-muted));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+code, pre { font-family: 'Roboto Mono', monospace; }
+small { font-size: 0.9em; }
+big { font-size: 1.1em; }
+b, strong { font-weight: bold; }
+
+a { color: var(--accent-secondary); }
+a:visited { color: color.scale(#eebf1c, $lightness: -15%); }
+
+/* ---------------------------------------------------------
+   Spovest Glassmorphism Layout
+--------------------------------------------------------- */
+.modern-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+.modern-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--accent-secondary);
+  box-shadow: var(--neon-glow);
+}
+
+#navBar {
+  background: rgba(11, 14, 20, 0.8) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--glass-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  border: none;
+  border-radius: 8px;
+  color: #111 !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: opacity 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary * {
+  color: #111 !important; 
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  box-shadow: var(--neon-glow);
+}
+
+.mdc-button--outlined:not(:disabled) {
+  background-color: transparent !important;
+  border-color: var(--glass-border) !important;
+  color: var(--text-main) !important;
+}
+
+/* ---------------------------------------------------------
+   Dropdown & Menu Overrides
+--------------------------------------------------------- */
+.mdc-menu-surface {
+  background-color: #0b0e14 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(12px);
+}
+
+.mdc-list-item {
+  background-color: transparent !important;
+  margin: 4px !important;
+  border-radius: 6px !important;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.mdc-list-item__text {
+  color: #f8fafc !important; 
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500;
+}
+
+.mdc-list-item:hover {
+  background-color: #04351e !important; 
+}
+
+.mdc-list-item:hover .mdc-list-item__text {
+  color: #eebf1c !important; 
+  text-shadow: 0 0 8px rgba(238, 191, 28, 0.4); 
+}
+
+.mdc-list-item--selected,
+.mdc-list-item--activated {
+  background-color: rgba(4, 53, 30, 0.5) !important;
+}
+
+.mdc-list-item--selected .mdc-list-item__text,
+.mdc-list-item--activated .mdc-list-item__text {
+  color: #eebf1c !important;
+}

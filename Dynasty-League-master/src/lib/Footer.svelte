@@ -1,0 +1,106 @@
+<script>
+    import { goto } from '$app/navigation';
+    import { managers } from '$lib/utils/helper';
+    import { tabs } from '$lib/utils/tabs';
+    import { onMount } from 'svelte';
+
+    let outOfDate = false;
+    let managersOutOfDate = false;
+
+    onMount(async () => {
+        const res = await fetch('/api/checkVersion', {compress: true})
+        const needUpdate = await res.json();
+        outOfDate = needUpdate;
+    })
+
+    if(managers) {
+        for(const manager of managers) {
+            if(manager.roster && !manager.managerID) {
+                managersOutOfDate = true;
+                break;
+            }
+        }
+    }
+
+    const year = new Date().getFullYear();
+</script>
+
+<footer>
+    {#if outOfDate}
+        <p class="updateNotice">There is an update available for your League Page.
+        <a href="https://github.com/nmelhado/league-page/blob/master/TRAINING_WHEELS.md#iv-updates">Follow the Update Instructions</a> to get all of the newest features!</p>
+    {/if}
+    {#if managersOutOfDate}
+        <p class="updateNotice">Your managers page needs an update, <a href="https://github.com/nmelhado/league-page/blob/master/TRAINING_WHEELS.md#2-add-managers">please follow the instructions</a> to get the most up-to-date experience.</p>
+    {/if}
+    <div id="navigation">
+        <ul>
+            {#each tabs as tab}
+                {#if !tab.nest}
+                    <li><div class="navLink" onclick={() => goto(tab.dest)}>{tab.label}</div></li>
+                {:else}
+                    {#each tab.children as child}
+                        {#if child.label != "Managers" || managers.length > 0}
+                            {#if child.label == "Go to Sleeper"}
+                                <li><div class="navLink" onclick={() => window.location = child.dest}>{child.label}</div></li>
+                            {:else}
+                                <li><div class="navLink" onclick={() => goto(child.dest)}>{child.label}</div></li>
+                            {/if}
+                        {/if}
+                    {/each}
+                {/if}
+            {/each}
+        </ul>
+    </div>
+    
+    <span class="copyright">&copy; 2025 - {year} staX Development</span>
+    <br />
+    <span class="creator">Built by Gunner Ammons<br /></span>
+</footer>
+
+<style>
+    footer {
+        background-color: var(--f8f8f8);
+        width: 100%;
+        border-top: 1px solid #920505; /* This is the footborder mentioned */
+        padding: 30px 0 60px;
+        text-align: center;
+        color: #777;
+        margin-top: auto; /* Ensures it sticks to bottom in flex containers */
+    }
+
+    #navigation {
+        margin: 0 0 2em;
+    }
+
+    #navigation ul {
+        margin: 0;
+        padding: 0;
+    }
+
+    #navigation ul li {
+        list-style-type: none;
+        display: inline;
+    }
+
+    #navigation li:not(:first-child):before {
+        content: " | ";
+    }
+
+    .navLink {
+        display: inline-block;
+        cursor: pointer;
+        padding: 6px 10px;
+    }
+
+    .navLink:hover {
+        color: #920505;
+    }
+
+    .updateNotice {
+        color: #999;
+        font-style: italic;
+        font-size: 0.8em;
+        margin-top: 0;
+    }
+</style>
