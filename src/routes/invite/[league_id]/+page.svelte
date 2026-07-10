@@ -4,13 +4,12 @@
     import { loadLeagueContext } from '$lib/stores/leagueContext';
     import Button, { Label } from '@smui/button';
 
+    // Data from +page.js
     let { data } = $props();
     
-    // Safety check to ensure we have data
+    // Defensive coding: handle potentially null data
     let leagueDetails = data?.leagueDetails || null;
     let leagueId = data?.leagueId || null;
-
-    console.log("Page rendered with leagueDetails:", leagueDetails);
 
     let user = $state(null);
     let claiming = $state(false);
@@ -20,15 +19,16 @@
     let authError = $state('');
 
     onMount(async () => {
-        const { data: sessionData } = await supabase.auth.getSession();
-        user = sessionData?.session?.user;
-        console.log("User session detected:", user);
+        try {
+            const { data: sessionData } = await supabase.auth.getSession();
+            user = sessionData?.session?.user;
+        } catch (e) {
+            console.error("Session fetch failed:", e);
+        }
     });
 
     async function handleAuth() {
         authError = '';
-        console.log("Attempting authentication...");
-        
         if (isLogin) {
             const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) authError = error.message;
@@ -41,9 +41,8 @@
     }
 
     async function claimSpot() {
+        if (!user) return;
         claiming = true;
-        console.log("Claiming spot for league:", leagueId);
-        
         const { error } = await supabase.from('user_leagues').upsert({
             user_id: user.id,
             league_id: leagueId,
@@ -51,11 +50,9 @@
         });
         
         if (!error) {
-            console.log("Spot claimed successfully!");
             await loadLeagueContext(user.id, leagueId);
             window.location.href = '/'; 
         } else {
-            console.error("Claim error:", error);
             authError = "Failed to claim spot. " + error.message;
             claiming = false;
         }
@@ -79,7 +76,6 @@
         max-width: 450px;
         width: 100%;
         text-align: center;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     }
     .logo-img {
         width: 100px; height: 100px;
@@ -96,15 +92,13 @@
         background: #000; border: 1px solid #333; border-radius: 8px; color: #fff;
     }
     .error { color: #ff2a6d; margin-bottom: 15px; font-weight: 500; }
-    .toggle { margin-top: 20px; color: #94a3b8; cursor: pointer; }
-    .toggle span { color: var(--accent-secondary, #eebf1c); }
 </style>
 
 <div class="invite-wrapper">
-    <div class="glass-card">
-        {#if !leagueDetails}
-            <h1 style="color: white;">League not found.</h1>
-        {:else}
+    {#if !leagueDetails}
+        <div style="color: white; font-family: sans-serif;">Loading League Hub...</div>
+    {:else}
+        <div class="glass-card">
             {#if leagueDetails.logo_url}
                 <img src={leagueDetails.logo_url} alt="League Logo" class="logo-img"/>
             {/if}
@@ -119,9 +113,6 @@
                 <Button variant="raised" style="width: 100%; background: #eebf1c; color: #000; font-weight: 800;" onclick={handleAuth}>
                     <Label>{isLogin ? 'Log In' : 'Sign Up'}</Label>
                 </Button>
-                <div class="toggle" onclick={() => isLogin = !isLogin}>
-                    {isLogin ? "New user?" : "Existing account?"} <span>{isLogin ? 'Sign Up' : 'Log In'}</span>
-                </div>
             {:else}
                 <p>Welcome, <strong>{user.email}</strong>! Click below to claim your spot.</p>
                 {#if authError} <div class="error">{authError}</div> {/if}
@@ -129,6 +120,6 @@
                     <Label>{claiming ? 'Securing Spot...' : 'Claim Roster'}</Label>
                 </Button>
             {/if}
-        {/if}
-    </div>
+        </div>
+    {/if}
 </div>
