@@ -17,21 +17,40 @@
     
     let chatContainer;
     let realtimeSubscription;
+    let activeChannelId = $state(null);
 
     onMount(async () => {
         const { data } = await supabase.auth.getSession();
         currentUser = data.session?.user;
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && activeChannelId) {
+                loadMessages();
+                setupRealtime(activeChannelId);
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     });
 
     $effect(() => {
-        if ($activeLeague?.id && currentUser) {
-            loading = true;
-            loadTeamNames().then(() => {
-                loadMessages().then(() => {
-                    setupRealtime();
-                    loading = false;
+        const leagueId = $activeLeague?.id;
+        const uid = currentUser?.id;
+
+        if (leagueId && uid) {
+            if (activeChannelId !== leagueId) {
+                activeChannelId = leagueId;
+                loading = true;
+                loadTeamNames().then(() => {
+                    loadMessages().then(() => {
+                        setupRealtime(leagueId);
+                        loading = false;
+                    });
                 });
-            });
+            }
         }
     });
 
@@ -40,48 +59,58 @@
     });
 
     async function loadTeamNames() {
-        const { data } = await supabase.from('user_leagues').select('user_id, team_name').eq('league_id', $activeLeague.id);
+        const { data } = await supabase.from('user_leagues').select('user_id, team_name').eq('league_id', activeChannelId);
         if (data) {
             const map = {};
-            data.forEach(user => map[user.user_id] = user.team_name);
+            data.forEach(user => {
+                map[user.user_id] = (user.team_name && user.team_name.trim() !== '') ? user.team_name : 'Unknown Team';
+            });
             teamMap = map;
         }
     }
 
     async function loadMessages() {
-        const { data, error } = await supabase.from('chat_messages').select('*').eq('league_id', $activeLeague.id).order('created_at', { ascending: true });
+        const { data, error } = await supabase.from('chat_messages')
+            .select('*')
+            .eq('league_id', activeChannelId)
+            .order('created_at', { ascending: true });
+        
         if (!error && data) {
             messages = data;
             scrollToBottom();
         }
     }
 
-    function setupRealtime() {
+    function setupRealtime(leagueId) {
         if (realtimeSubscription) supabase.removeChannel(realtimeSubscription);
         
-        realtimeSubscription = supabase.channel(`public:chat_messages`)
+        realtimeSubscription = supabase.channel(`public:chat_messages-${leagueId}`)
             .on('postgres_changes', { 
                 event: 'INSERT', 
                 schema: 'public', 
                 table: 'chat_messages'
             }, (payload) => {
-                // Client-side filter prevents UUID/String database mismatch errors
-                if (payload.new.league_id === $activeLeague.id) {
-                    // Prevent duplicates if sender already forced a local refresh
-                    const alreadyExists = messages.some(m => m.id === payload.new.id);
-                    if (!alreadyExists) {
-                        messages = [...messages, payload.new];
-                        scrollToBottom();
-                    }
+                if (payload.new.league_id !== leagueId) return;
+                
+                const alreadyExists = messages.some(m => m.id === payload.new.id);
+                if (!alreadyExists) {
+                    messages = [...messages, payload.new];
+                    scrollToBottom();
                 }
-            }).subscribe();
+            }).subscribe((status) => {
+                if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+                    setTimeout(() => {
+                        if (activeChannelId) setupRealtime(activeChannelId);
+                    }, 3000);
+                }
+            });
     }
 
     function scrollToBottom() {
         setTimeout(() => { if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight; }, 100);
     }
 
-    function triggerFileInput() { document.getElementById('media-upload').click(); }
+    function triggerFileInput() { document.getElementById('media-upload-feed').click(); }
 
     function handleFileChange(event) {
         const file = event.target.files[0];
@@ -93,23 +122,45 @@
         isUploading = true;
         let mediaUrl = null;
 
+        const tempId = 'temp-' + Date.now();
+        const pendingMsg = {
+            id: tempId,
+            user_id: currentUser.id,
+            league_id: activeChannelId,
+            text_content: newMessage.trim() || null,
+            media_url: null 
+        };
+
+        if (!selectedFile) {
+            messages = [...messages, pendingMsg];
+            newMessage = '';
+            scrollToBottom();
+        }
+
         if (selectedFile) {
             const fileExt = selectedFile.name.split('.').pop();
-            const filePath = `${$activeLeague.id}/${Math.random()}.${fileExt}`; 
+            const filePath = `${activeChannelId}/${Math.random()}.${fileExt}`; 
             const { error: uploadError } = await supabase.storage.from('chat-media').upload(filePath, selectedFile);
             if (!uploadError) {
                 const { data } = supabase.storage.from('chat-media').getPublicUrl(filePath);
                 mediaUrl = data.publicUrl;
             }
+            selectedFile = null;
         }
 
-        const payload = { league_id: $activeLeague.id, user_id: currentUser.id, text_content: newMessage.trim() || null, media_url: mediaUrl };
-        const { error } = await supabase.from('chat_messages').insert(payload);
+        const payload = { league_id: activeChannelId, user_id: currentUser.id, text_content: pendingMsg.text_content, media_url: mediaUrl };
+        const { data, error } = await supabase.from('chat_messages').insert(payload).select().single();
         
-        if (!error) { 
-            newMessage = ''; 
-            selectedFile = null; 
-            await loadMessages(); // INSTANT UI REFRESH FOR THE SENDER
+        if (!error && data) { 
+            if (!mediaUrl) {
+                messages = messages.map(m => m.id === tempId ? data : m);
+            } else {
+                messages = [...messages, data];
+                scrollToBottom();
+            }
+        } else {
+            messages = messages.filter(m => m.id !== tempId);
+            console.error("Failed to send", error);
         }
         isUploading = false;
     }
@@ -123,14 +174,13 @@
 </script>
 
 <style>
-    /* ... (Keep your exact same CSS from my previous message for this file) ... */
     .chat-wrapper { display: flex; flex-direction: column; height: 100%; width: 100%; background: transparent; overflow: hidden; }
     .chat-header { flex: 0 0 auto; padding: 15px; background: rgba(0, 0, 0, 0.4); border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: bold; text-align: center; color: var(--text-main); }
     .chat-messages { flex: 1 1 auto; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
     .message-row { display: flex; flex-direction: column; max-width: 85%; }
     .message-row.mine { align-self: flex-end; align-items: flex-end; }
     .team-label { font-size: 0.7em; color: var(--text-muted); margin-bottom: 4px; padding: 0 4px; }
-    .bubble { padding: 10px 14px; border-radius: 12px; color: #fff; font-size: 0.9em; word-wrap: break-word; }
+    .bubble { padding: 10px 14px; border-radius: 12px; color: #fff; font-size: 0.9em; word-wrap: break-word; white-space: pre-wrap; }
     .mine .bubble { background: var(--accent-primary, #0b0e14); border-bottom-right-radius: 2px; }
     .theirs .bubble { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); border-bottom-left-radius: 2px; }
     .media-attachment { max-width: 100%; border-radius: 8px; margin-top: 5px; }
@@ -151,7 +201,7 @@
             {#each messages as msg}
                 {@const isMine = msg.user_id === currentUser?.id}
                 <div class="message-row {isMine ? 'mine' : 'theirs'}">
-                    {#if !isMine}<div class="team-label">{teamMap[msg.user_id] || 'Manager'}</div>{/if}
+                    {#if !isMine}<div class="team-label">{teamMap[msg.user_id] || 'Unknown Team'}</div>{/if}
                     <div class="bubble">
                         {#if msg.text_content}<span>{msg.text_content}</span>{/if}
                         {#if msg.media_url}
@@ -170,7 +220,7 @@
     {#if selectedFile}<div class="file-preview">📎 {selectedFile.name} ready to send</div>{/if}
 
     <div class="chat-input-area">
-        <input type="file" id="media-upload" accept="image/*,video/*" onchange={handleFileChange} />
+        <input type="file" id="media-upload-feed" accept="image/*,video/*" onchange={handleFileChange} />
         
         <IconButton class="material-icons" onclick={triggerFileInput} style="color: var(--text-muted); padding: 8px;" title="Attach Media">
             attach_file

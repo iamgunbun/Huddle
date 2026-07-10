@@ -14,7 +14,7 @@
     let claiming = false;
     let email = '';
     let password = '';
-    let selectedTeam = ''; // Tracks the team they pick from the dropdown
+    let selectedTeam = ''; 
     let isLogin = true;
     let authError = '';
 
@@ -39,7 +39,6 @@
     async function claimSpot() {
         if (!user) return;
         
-        // Ensure they actually picked a team before submitting
         if (!selectedTeam) {
             authError = "Please select your team from the dropdown.";
             return;
@@ -52,7 +51,7 @@
             user_id: user.id,
             league_id: leagueId,
             is_commissioner: false,
-            team_name: selectedTeam // Links their Huddle account to this specific team!
+            team_name: selectedTeam // Now successfully saving the actual team name
         });
         
         if (!error) {
@@ -117,6 +116,7 @@
         width: 100%; padding: 14px 15px; margin-bottom: 15px;
         background: #000; border: 1px solid #333; border-radius: 8px; color: #fff;
         font-family: inherit; font-size: 1em; outline: none;
+        box-sizing: border-box;
     }
     select.input-box {
         cursor: pointer;
@@ -171,7 +171,10 @@
                         <select class="input-box" bind:value={selectedTeam}>
                             <option value="" disabled selected>-- Choose your Sleeper Team --</option>
                             {#each sleeperUsers as su}
-                                <option value={su.display_name}>{su.display_name}</option>
+                                <!-- Prioritize the actual Sleeper team name, fallback to username if they haven't set one -->
+                                <option value={su.metadata?.team_name || su.display_name}>
+                                    {su.metadata?.team_name || su.display_name}
+                                </option>
                             {/each}
                         </select>
                     {:else}

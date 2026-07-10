@@ -1,6 +1,6 @@
 <script>
-	import { goto } from "$app/navigation";
-	import { getTeamData } from "$lib/utils/helperFunctions/universalFunctions";
+    import { goto } from "$app/navigation";
+    import { getTeamData } from "$lib/utils/helperFunctions/universalFunctions";
 
     export let playerOne, playerTwo, leagueTeamManagers;
 
@@ -130,7 +130,8 @@
             <select class="selectInput left" id="managerOne" name="managerOne" bind:value={playerOne}>
                 <option value={null}>Select a manager</option>
                 {#each usersOne as user}
-                    <option value={user}>{leagueTeamManagers.users[user].display_name}</option>
+                    <!-- Replaced display_name with getTeamData().name -->
+                    <option value={user}>{getTeamData(leagueTeamManagers.users, user).name}</option>
                 {/each}
             </select>
             {#if playerOne}
@@ -143,10 +144,11 @@
     <!-- manager 2 -->
     <div class="manager">
         <div class="container">
-            <select class="selectInput right" id="managerOne" name="managerOne" bind:value={playerTwo}>
+            <select class="selectInput right" id="managerTwo" name="managerTwo" bind:value={playerTwo}>
                 <option value={null}>Select a manager</option>
                 {#each usersTwo as user}
-                    <option value={user}>{leagueTeamManagers.users[user].display_name}</option>
+                    <!-- Replaced display_name with getTeamData().name -->
+                    <option value={user}>{getTeamData(leagueTeamManagers.users, user).name}</option>
                 {/each}
             </select>
             {#if playerTwo}
