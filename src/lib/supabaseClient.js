@@ -1,15 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
-import { env } from '$env/dynamic/public';
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 
-// SvelteKit's native way to grab public variables safely
-const supabaseUrl = env.PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = env.PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_ANON_KEY) {
     console.error("🚨 CRITICAL: Supabase Environment Variables are missing!");
 }
 
 export const supabase = createClient(
-    supabaseUrl || 'https://MISSING-URL-IN-VERCEL.supabase.co', 
-    supabaseAnonKey || 'MISSING-KEY'
+    PUBLIC_SUPABASE_URL || 'https://MISSING-URL-IN-VERCEL.supabase.co', 
+    PUBLIC_SUPABASE_ANON_KEY || 'MISSING-KEY'
 );
