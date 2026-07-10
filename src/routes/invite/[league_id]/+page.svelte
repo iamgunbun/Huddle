@@ -4,27 +4,23 @@
     import { loadLeagueContext } from '$lib/stores/leagueContext';
     import Button, { Label } from '@smui/button';
 
-    // Data from +page.js
-    let { data } = $props();
+    // IMPORTANT: Reverted to Svelte 4 syntax to match your existing app
+    export let data; 
     
-    // Defensive coding: handle potentially null data
-    let leagueDetails = data?.leagueDetails || null;
-    let leagueId = data?.leagueId || null;
+    // Defensive access
+    $: leagueDetails = data?.leagueDetails || null;
+    $: leagueId = data?.leagueId || null;
 
-    let user = $state(null);
-    let claiming = $state(false);
-    let email = $state('');
-    let password = $state('');
-    let isLogin = $state(true);
-    let authError = $state('');
+    let user = null;
+    let claiming = false;
+    let email = '';
+    let password = '';
+    let isLogin = true;
+    let authError = '';
 
     onMount(async () => {
-        try {
-            const { data: sessionData } = await supabase.auth.getSession();
-            user = sessionData?.session?.user;
-        } catch (e) {
-            console.error("Session fetch failed:", e);
-        }
+        const { data: sessionData } = await supabase.auth.getSession();
+        user = sessionData?.session?.user;
     });
 
     async function handleAuth() {
@@ -76,16 +72,17 @@
         max-width: 450px;
         width: 100%;
         text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     }
     .logo-img {
         width: 100px; height: 100px;
         border-radius: 50%;
-        border: 3px solid var(--accent-secondary, #eebf1c);
+        border: 3px solid #eebf1c;
         object-fit: cover;
         margin: 0 auto 20px;
     }
     h1 { color: #f8fafc; font-weight: 800; text-transform: uppercase; margin: 0 0 5px; }
-    .subhead { color: var(--accent-secondary, #eebf1c); font-weight: 600; margin-bottom: 30px; }
+    .subhead { color: #eebf1c; font-weight: 600; margin-bottom: 30px; }
     p { color: #94a3b8; margin-bottom: 30px; }
     .input-box {
         width: 100%; padding: 14px 15px; margin-bottom: 15px;
@@ -113,6 +110,9 @@
                 <Button variant="raised" style="width: 100%; background: #eebf1c; color: #000; font-weight: 800;" onclick={handleAuth}>
                     <Label>{isLogin ? 'Log In' : 'Sign Up'}</Label>
                 </Button>
+                <div class="toggle" style="margin-top:20px; color:#94a3b8; cursor:pointer;" onclick={() => isLogin = !isLogin}>
+                    {isLogin ? "New user?" : "Existing account?"} <span style="color:#eebf1c;">{isLogin ? 'Sign Up' : 'Log In'}</span>
+                </div>
             {:else}
                 <p>Welcome, <strong>{user.email}</strong>! Click below to claim your spot.</p>
                 {#if authError} <div class="error">{authError}</div> {/if}
