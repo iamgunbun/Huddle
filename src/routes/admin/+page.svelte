@@ -1,14 +1,14 @@
 <script>
     import { supabase } from '$lib/supabaseClient';
     import { onMount } from 'svelte';
-
+    
     let title = '';
     let content = '';
     let videoFile;
     let uploading = false;
     let user = null;
     let profile = null;
-
+    
     onMount(async () => {
         const { data } = await supabase.auth.getUser();
         user = data.user;
@@ -21,24 +21,24 @@
             profile = profileData;
         }
     });
-
+    
     async function handlePost() {
         if (!user) return alert("Please log in first");
         uploading = true;
-
         let videoUrl = null;
+        
         if (videoFile) {
             const fileExt = videoFile.name.split('.').pop();
             const fileName = `${Math.random()}.${fileExt}`;
             const { error: uploadError } = await supabase.storage
                 .from('blog-videos')
                 .upload(fileName, videoFile);
-            
+                
             if (uploadError) throw uploadError;
             const { data: urlData } = supabase.storage.from('blog-videos').getPublicUrl(fileName);
             videoUrl = urlData.publicUrl;
         }
-
+        
         const { error } = await supabase.from('blog_posts').insert({
             title,
             content,
@@ -46,7 +46,7 @@
             author_id: user.id,
             team_name: profile.team_name
         });
-
+        
         if (error) alert(error.message);
         else alert("Post successful!");
         uploading = false;
@@ -59,14 +59,15 @@
         <input bind:value={title} placeholder="Post Title" />
         <textarea bind:value={content} placeholder="Write your post here..."></textarea>
         
-        <label>Upload Video: <input type="file" accept="video/*" on:change={(e) => videoFile = e.target.files[0]} /></label>
+        <!-- CRITICAL FIX: Changed on:change to onchange -->
+        <label>Upload Video: <input type="file" accept="video/*" onchange={(e) => videoFile = e.target.files[0]} /></label>
         
         <button onclick={handlePost} disabled={uploading}>
             {uploading ? 'Uploading...' : 'Submit Post'}
         </button>
     {:else}
         <p>Please log in with the credentials provided by the commissioner.</p>
-        {/if}
+    {/if}
 </div>
 
 <style>
