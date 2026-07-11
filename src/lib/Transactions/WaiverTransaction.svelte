@@ -41,18 +41,67 @@
         border-radius: 12px 0 0 12px;
     }
 
+    <style>
+    /* ... Keep your existing top styles ... */
+    
     .manager-header {
-        display: flex;
-        align-items: center;
+        display: block; /* Helps with truncation */
         border-bottom: 2px solid #eebf1c;
         padding-bottom: 6px;
-        margin-bottom: 16px;
-        width: 250px;
+        margin-bottom: 12px;
+        width: 100%;
         font-weight: 700;
         color: #f8fafc;
         letter-spacing: 0.5px;
-        font-size: 1.05em;
+        cursor: pointer;
+        text-align: left;
+        
+        /* Truncation */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
+    
+    .manager-header:hover { color: #eebf1c; }
+
+    /* ... Keep your existing middle styles ... */
+
+    <style>
+    /* ... Keep your existing top styles ... */
+    
+    .manager-header {
+        display: block; /* Helps with truncation */
+        border-bottom: 2px solid #eebf1c;
+        padding-bottom: 6px;
+        margin-bottom: 12px;
+        width: 100%;
+        font-weight: 700;
+        color: #f8fafc;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        text-align: left;
+        
+        /* Truncation */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .manager-header:hover { color: #eebf1c; }
+
+    /* ... Keep your existing middle styles ... */
+
+    @media (max-width: 500px) {
+        /* CRITICAL FIX: Left padding kept at 45px so the text clears the yellow bracket */
+        .trade-card { padding: 15px 15px 35px 45px; } 
+        .timestamp { bottom: 10px; right: 15px; }
+    }
+</style>
+
+<!-- No HTML changes needed for TradeTransaction, just the CSS above will lock the layout in! -->
+</style>
+
+<!-- No HTML changes needed for TradeTransaction, just the CSS above will lock the layout in! -->
 
     .moves-container { display: flex; flex-direction: column; gap: 16px; }
     .move-row { display: flex; align-items: center; gap: 15px; }

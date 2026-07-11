@@ -1,26 +1,33 @@
 import { getLeagueMatchups, getLeagueTeamManagers } from '$lib/utils/helper';
 import { activeLeague } from '$lib/stores/leagueContext.js';
+import { get } from 'svelte/store';
 
-// 1. Disable Server-Side Rendering so it waits for the browser's local authentication
 export const ssr = false;
 
 export async function load() {
-    // 2. Pause the SvelteKit loading sequence until the Supabase store is populated
-    const dynamicLeagueID = await new Promise((resolve) => {
-        const unsubscribe = activeLeague.subscribe(value => {
-            if (value && value.sleeper_league_id) {
-                unsubscribe();
-                resolve(value.sleeper_league_id);
-            }
-        });
-    });
+    const activeStore = get(activeLeague);
+    const dynamicLeagueID = activeStore?.sleeper_league_id;
 
-    // 3. Pass the valid dynamic ID into the Sleeper fetch functions
     const matchupsData = getLeagueMatchups(dynamicLeagueID);
     const leagueTeamManagersData = getLeagueTeamManagers(dynamicLeagueID);
+    
+    // Await the API data to build the managers array dynamically
+    const managersObj = await leagueTeamManagersData;
+    const users = managersObj?.users || {};
+    
+    const dynamicManagers = Object.keys(users).map(userId => {
+        const user = users[userId];
+        return {
+            managerID: userId,
+            name: user.metadata?.team_name || user.display_name,
+            photo: user.metadata?.avatar || `https://sleepercdn.com/avatars/thumbs/${user.avatar}`,
+            mode: 'Dynasty'
+        };
+    });
 
     return {
         matchupsData,
-        leagueTeamManagersData
+        leagueTeamManagersData,
+        managers: dynamicManagers // Injects the auto-generated list
     };
 }
