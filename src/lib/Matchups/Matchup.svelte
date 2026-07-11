@@ -13,12 +13,13 @@
     $: teamAInfo = getTeamFromTeamManagers(leagueTeamManagers, teamA.roster_id, year);
     $: teamBInfo = getTeamFromTeamManagers(leagueTeamManagers, teamB.roster_id, year);
 
-    $: teamAPoints = teamA.points ? round(teamA.points.reduce((t, nV) => t + nV, 0)) : 0;
-    $: teamBPoints = teamB.points ? round(teamB.points.reduce((t, nV) => t + nV, 0)) : 0;
+    // Added parseFloat to guarantee mathematical addition, not string concatenation
+    $: teamAPoints = teamA.points ? round(teamA.points.reduce((t, nV) => t + parseFloat(nV || 0), 0)) : 0;
+    $: teamBPoints = teamB.points ? round(teamB.points.reduce((t, nV) => t + parseFloat(nV || 0), 0)) : 0;
     
-    // Calculate Projections
-    $: teamAProj = teamA.starters ? round(teamA.starters.reduce((t, s) => t + (players[s]?.wi?.[displayWeek]?.p || 0), 0)) : 0;
-    $: teamBProj = teamB.starters ? round(teamB.starters.reduce((t, s) => t + (players[s]?.wi?.[displayWeek]?.p || 0), 0)) : 0;
+    // CRITICAL FIX: Force projection strings into floats BEFORE adding them together
+    $: teamAProj = teamA.starters ? round(teamA.starters.reduce((t, s) => t + (parseFloat(players[s]?.wi?.[displayWeek]?.p) || 0), 0)) : 0;
+    $: teamBProj = teamB.starters ? round(teamB.starters.reduce((t, s) => t + (parseFloat(players[s]?.wi?.[displayWeek]?.p) || 0), 0)) : 0;
 
     const toggleExpanded = () => {
         expanded = !expanded;
@@ -32,85 +33,118 @@
 </script>
 
 <style>
+    /* Sleeper-inspired Mobile App Aesthetics */
     .matchup-container {
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(238, 191, 28, 0.15);
-        border-radius: 12px;
-        backdrop-filter: blur(10px);
-        margin: 15px auto;
+        background: rgba(22, 28, 38, 0.85); /* Deep native-app blue/gray */
+        border-radius: 16px;
+        margin: 12px auto;
         max-width: 850px;
         overflow: hidden;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05);
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s;
+        -webkit-tap-highlight-color: transparent;
     }
-    .matchup-container:hover {
-        border-color: rgba(238, 191, 28, 0.5);
-        transform: translateY(-2px);
+
+    /* Active state gives physical touch feedback on mobile */
+    .matchup-container:active {
+        transform: scale(0.98);
+        background: rgba(30, 38, 52, 0.95);
     }
+
     .matchup-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 15px 20px;
+        padding: 16px 20px;
     }
+
     .team-block {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 15px;
+        gap: 8px;
         flex: 1;
+        min-width: 0; /* Prevents text overflow breaking flexbox */
     }
-    .team-block.right {
-        flex-direction: row-reverse;
-        text-align: right;
-    }
+
     .avatar {
-        width: 50px;
-        height: 50px;
+        width: 52px;
+        height: 52px;
         border-radius: 50%;
         border: 2px solid rgba(255, 255, 255, 0.1);
         object-fit: cover;
         background: #111;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.4);
     }
+
     .team-name {
         font-weight: 700;
         color: #f8fafc;
-        font-size: 1.1em;
+        font-size: 0.95em;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        max-width: 120px;
     }
+
     .score-block {
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 0 20px;
-        border-left: 1px solid rgba(255, 255, 255, 0.05);
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
-        min-width: 160px;
+        justify-content: center;
+        padding: 0 15px;
+        flex: 1.2;
     }
+
     .actual-score {
-        font-size: 1.4em;
+        font-size: 1.6em;
         font-weight: 800;
-        color: #f8fafc;
         display: flex;
         align-items: center;
-        gap: 15px;
+        justify-content: space-between;
+        width: 100%;
+        margin-bottom: 4px;
+        letter-spacing: -0.5px;
     }
-    .proj-score {
-        font-size: 0.8em;
-        color: #94a3b8;
-        display: flex;
-        gap: 40px;
-        margin-top: 6px;
-    }
-    .winning { color: #eebf1c; text-shadow: 0 0 10px rgba(238,191,28,0.4); }
-    .losing { color: #94a3b8; }
 
-    @media (max-width: 600px) {
-        .matchup-header { padding: 10px; gap: 5px; }
-        .team-name { font-size: 0.85em; }
-        .avatar { width: 35px; height: 35px; }
-        .score-block { padding: 0 5px; min-width: 90px; border: none; }
-        .actual-score { font-size: 1.1em; gap: 10px; }
-        .proj-score { font-size: 0.7em; gap: 20px; }
+    .proj-score {
+        font-size: 0.75em;
+        font-weight: 600;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .vs-divider {
+        font-size: 0.5em;
+        color: rgba(255,255,255,0.15);
+        font-weight: 800;
+        margin: 0 8px;
+    }
+
+    .winning { 
+        color: var(--accent-secondary, #eebf1c); 
+        text-shadow: 0 0 15px rgba(238, 191, 28, 0.2); 
+    }
+    
+    .losing { 
+        color: #f8fafc; 
+    }
+
+    /* Mobile Responsive Tightening */
+    @media (max-width: 500px) {
+        .matchup-header { padding: 12px 10px; }
+        .avatar { width: 44px; height: 44px; }
+        .team-name { font-size: 0.8em; max-width: 90px; }
+        .actual-score { font-size: 1.35em; }
+        .proj-score { font-size: 0.7em; }
     }
 </style>
 
@@ -126,17 +160,17 @@
         <div class="score-block">
             <div class="actual-score">
                 <span class="{teamAPoints > teamBPoints ? 'winning' : 'losing'}">{teamAPoints}</span>
-                <span style="color: rgba(255,255,255,0.2); font-size: 0.8em;">VS</span>
+                <span class="vs-divider">VS</span>
                 <span class="{teamBPoints > teamAPoints ? 'winning' : 'losing'}">{teamBPoints}</span>
             </div>
             <div class="proj-score">
-                <span>{teamAProj}</span>
-                <span>{teamBProj}</span>
+                <span>Proj {teamAProj}</span>
+                <span>Proj {teamBProj}</span>
             </div>
         </div>
 
         <!-- Team B -->
-        <div class="team-block right" onclick={(e) => { e.stopPropagation(); gotoManager({year, leagueTeamManagers, rosterID: teamB.roster_id}); }}>
+        <div class="team-block" onclick={(e) => { e.stopPropagation(); gotoManager({year, leagueTeamManagers, rosterID: teamB.roster_id}); }}>
             <img class="avatar" src="{teamBInfo.avatar}" alt="Team B" />
             <span class="team-name">{teamBInfo.name}</span>
         </div>
@@ -144,7 +178,7 @@
 
     <!-- Dropdown Player Matchups -->
     {#if expanded || expandOverride}
-        <div class="matchup-details" style="padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.3);">
+        <div class="matchup-details" style="background: rgba(0,0,0,0.25); border-top: 1px solid rgba(255,255,255,0.05); padding-top: 5px;">
             {#if teamA.starters && teamB.starters}
                 {#each teamA.starters as starter, ix}
                     <MatchupPlayer 
