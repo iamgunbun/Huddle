@@ -20,7 +20,7 @@
         background: #0b0e14;
         border: 1px solid rgba(255, 255, 255, 0.05);
         border-radius: 12px;
-        padding: 20px 20px 20px 45px; /* FIXED: Increased left padding */
+        padding: 20px 20px 20px 45px;
         margin-bottom: 20px;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
         cursor: pointer;
@@ -31,7 +31,7 @@
     .waiver-card::before {
         content: '';
         position: absolute;
-        left: 15px; /* FIXED: Pushed bracket off the outer edge */
+        left: 15px;
         top: 25px;
         height: calc(100% - 50px);
         width: 20px;
@@ -41,93 +41,52 @@
         border-radius: 12px 0 0 12px;
     }
 
-    <style>
-    /* ... Keep your existing top styles ... */
-    
     .manager-header {
-        display: block; /* Helps with truncation */
+        display: flex;
+        align-items: center;
         border-bottom: 2px solid #eebf1c;
         padding-bottom: 6px;
-        margin-bottom: 12px;
+        margin-bottom: 16px;
         width: 100%;
         font-weight: 700;
         color: #f8fafc;
         letter-spacing: 0.5px;
-        cursor: pointer;
-        text-align: left;
-        
-        /* Truncation */
+        font-size: 1.05em;
+    }
+
+    .truncate-name {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        max-width: 80%; 
     }
-    
-    .manager-header:hover { color: #eebf1c; }
-
-    /* ... Keep your existing middle styles ... */
-
-    <style>
-    /* ... Keep your existing top styles ... */
-    
-    .manager-header {
-        display: block; /* Helps with truncation */
-        border-bottom: 2px solid #eebf1c;
-        padding-bottom: 6px;
-        margin-bottom: 12px;
-        width: 100%;
-        font-weight: 700;
-        color: #f8fafc;
-        letter-spacing: 0.5px;
-        cursor: pointer;
-        text-align: left;
-        
-        /* Truncation */
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    
-    .manager-header:hover { color: #eebf1c; }
-
-    /* ... Keep your existing middle styles ... */
-
-    @media (max-width: 500px) {
-        /* CRITICAL FIX: Left padding kept at 45px so the text clears the yellow bracket */
-        .trade-card { padding: 15px 15px 35px 45px; } 
-        .timestamp { bottom: 10px; right: 15px; }
-    }
-</style>
-
-<!-- No HTML changes needed for TradeTransaction, just the CSS above will lock the layout in! -->
-</style>
-
-<!-- No HTML changes needed for TradeTransaction, just the CSS above will lock the layout in! -->
 
     .moves-container { display: flex; flex-direction: column; gap: 16px; }
     .move-row { display: flex; align-items: center; gap: 15px; }
-
     .avatar-container { position: relative; width: 50px; height: 50px; }
+    
     .player-avatar {
         width: 100%; height: 100%; border-radius: 50%;
         background-position: center; background-repeat: no-repeat; background-size: cover;
         background-color: #111; border: 2px solid;
     }
-
+    
     .player-avatar.drop { border-color: #ff2a6d; }
     .player-avatar.add { border-color: #00ceb8; }
-
+    
     .badge {
         position: absolute; bottom: -4px; right: -4px; width: 20px; height: 20px;
         border-radius: 50%; display: flex; align-items: center; justify-content: center;
         color: #fff; font-size: 16px; font-weight: 900; line-height: 1;
     }
+    
     .badge.drop { background: #ff2a6d; }
     .badge.add { background: #00ceb8; }
-
+    
     .player-info { display: flex; flex-direction: column; justify-content: center; text-align: left; }
     .player-name { color: #f8fafc; font-weight: 600; font-size: 0.95em; }
     .player-meta { color: #94a3b8; font-size: 0.75em; text-transform: uppercase; margin-top: 2px; }
-
+    
     .timestamp {
         position: absolute; bottom: 15px; right: 20px;
         font-size: 0.75em; font-style: italic; font-weight: 600; color: #94a3b8;
@@ -135,19 +94,18 @@
 
     @media (max-width: 500px) {
         .manager-header { width: 100%; }
-        .waiver-card { padding: 15px 15px 40px 25px; }
+        .waiver-card { padding: 15px 15px 35px 45px; }
         .timestamp { bottom: 10px; right: 15px; }
     }
 </style>
 
 <div class="waiver-card" onclick={() => gotoManager({year: transaction.season, leagueTeamManagers, rosterID: owner})}>
     <div class="manager-header">
-        {teamName}
+        <span class="truncate-name">{teamName}</span>
         {#if transaction.moves[0][0].bid}
             <span style="color: #94a3b8; font-style: italic; font-weight: 400; margin-left: 8px;"> - ${transaction.moves[0][0].bid}</span>
         {/if}
     </div>
-
     <div class="moves-container">
         {#each transaction.moves as move}
             {@const type = move[0].type === "Added" ? 'add' : 'drop'}
@@ -164,6 +122,5 @@
             </div>
         {/each}
     </div>
-
     <div class="timestamp">{transaction.date}</div>
 </div>
