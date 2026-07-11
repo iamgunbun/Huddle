@@ -9,6 +9,7 @@ export const tabs = [
         key: 'league_info',
         children: [
             { icon: 'storage', label: 'Rosters', dest: '/rosters' },
+            { icon: 'people', label: 'Managers', dest: '/managers' }, // Added Managers Back
             { icon: 'local_fire_department', label: 'Rivalry', dest: '/rivalry' },
             { icon: 'leaderboard', label: 'Standings', dest: '/standings' },
             { icon: 'view_comfy', label: 'Drafts', dest: '/drafts' },

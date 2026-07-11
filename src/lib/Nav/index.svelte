@@ -60,21 +60,24 @@
         }
     }
 
-    /* TOP HEADER */
+    /* TOP HEADER - Centered Fix */
     .top-header {
         position: fixed; top: 0; left: 0; right: 0; height: 60px;
         background: #0b0e14; border-bottom: 1px solid rgba(238,191,28,0.2);
-        display: flex; align-items: center; justify-content: space-between;
+        display: flex; align-items: center; justify-content: center; /* Centered */
         padding: 0 15px; z-index: 990;
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
     
-    .header-left { display: flex; align-items: center; gap: 15px; }
-    .menu-btn { background: transparent; border: none; color: #f8fafc; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .menu-btn { 
+        position: absolute; left: 15px; /* Pinned to left */
+        background: transparent; border: none; color: #f8fafc; cursor: pointer; display: flex; align-items: center; justify-content: center; 
+    }
+    
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; color: #f8fafc; font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px; }
     .brand-logo { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #eebf1c; object-fit: cover; }
 
-    /* MOBILE HORIZONTAL TABS (Options at the Top) */
+    /* MOBILE HORIZONTAL TABS */
     .mobile-tabs {
         position: fixed; top: 60px; left: 0; right: 0; height: 45px;
         background: rgba(11,14,20,0.98); border-bottom: 1px solid rgba(255,255,255,0.05);
