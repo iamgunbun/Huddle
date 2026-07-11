@@ -140,21 +140,84 @@
 </script>
 
 <style>
-    .proj-container { display: flex; flex-direction: column; gap: 12px; }
-    .team-row { display: flex; align-items: center; padding: 12px; gap: 10px; }
-    .rank-change { font-size: 0.8em; font-weight: bold; width: 25px; text-align: center; }
+    .proj-container { display: flex; flex-direction: column; gap: 8px; }
+    
+    .team-row { 
+        display: flex; 
+        align-items: center; 
+        padding: 10px; 
+        gap: 10px; 
+    }
+    
+    .rank-change { 
+        font-size: 0.8em; 
+        font-weight: bold; 
+        width: 22px; 
+        text-align: center; 
+        flex-shrink: 0;
+    }
+    
     .up { color: var(--barChartSix, #04351e); }
     .down { color: #ef4444; }
     .neutral { color: var(--text-muted); }
     
-    /* Object-fit cover ensures rectangular team images fit the circle */
-    .avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent-secondary); background-color: #111; object-fit: cover; }
+    .avatar { 
+        width: 36px; 
+        height: 36px; 
+        border-radius: 50%; 
+        border: 2px solid var(--accent-secondary); 
+        background-color: #111; 
+        object-fit: cover; 
+        flex-shrink: 0;
+    }
     
-    .details { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; }
-    .team-name { font-weight: 700; font-size: 0.95em; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .record { font-size: 0.75em; color: var(--text-muted); }
-    .odds { text-align: right; font-size: 0.82em; display: flex; flex-direction: column; min-width: 90px; }
-    .odds span { color: var(--text-main); font-weight: bold; }
+    /* CRITICAL FIX: min-width 0 forces the flexbox to truncate text instead of expanding */
+    .details { 
+        flex-grow: 1; 
+        display: flex; 
+        flex-direction: column; 
+        min-width: 0; 
+    }
+    
+    .team-name { 
+        font-weight: 700; 
+        font-size: 0.9em; 
+        color: var(--text-main); 
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+        width: 100%;
+    }
+    
+    .record { 
+        font-size: 0.75em; 
+        color: var(--text-muted); 
+    }
+    
+    /* Flex-shrink 0 ensures the odds NEVER get squished off screen */
+    .odds { 
+        text-align: right; 
+        font-size: 0.75em; 
+        display: flex; 
+        flex-direction: column; 
+        min-width: 75px; 
+        flex-shrink: 0; 
+    }
+    
+    .odds span { 
+        color: var(--text-main); 
+        font-weight: bold; 
+    }
+
+    /* Aggressive mobile scaling */
+    @media (max-width: 450px) {
+        .team-row { padding: 8px 6px; gap: 6px; }
+        .avatar { width: 30px; height: 30px; border-width: 1px; }
+        .team-name { font-size: 0.85em; }
+        .record { font-size: 0.7em; }
+        .odds { font-size: 0.7em; min-width: 60px; }
+        .rank-change { width: 16px; font-size: 0.7em; }
+    }
 </style>
 
 <div class="modern-card" style="padding: 15px;">
