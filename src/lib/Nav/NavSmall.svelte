@@ -1,39 +1,37 @@
 <script>
-    import Drawer, { AppContent, Content, Header, Title } from '@smui/drawer';
-    import List, { Item, Text, Graphic, Separator } from '@smui/list';
-    import TopAppBar, { Row, Section } from '@smui/top-app-bar';
-    import IconButton from '@smui/icon-button';
     import { tabs } from '$lib/utils/tabs.js';
     import { goto } from '$app/navigation';
     import { activeLeague, userLeaguesList } from '$lib/stores/leagueContext.js';
     import { supabase } from '$lib/supabaseClient';
+    import { slide, fade } from 'svelte/transition';
+    import { page } from '$app/stores';
 
     let { handleLeagueSwitch } = $props();
     
-    let drawerOpen = $state(false);
+    let showLeagueMenu = $state(false);
+    let showSettingsMenu = $state(false);
+
+    function navigate(dest) {
+        showLeagueMenu = false;
+        showSettingsMenu = false;
+        if (dest.startsWith('http')) {
+            window.location.href = dest;
+        } else {
+            goto(dest);
+        }
+    }
 
     async function handleLogout() {
         await supabase.auth.signOut();
         window.location.href = '/login';
     }
 
-    function navigate(dest) {
-        if (dest.startsWith('http')) {
-            window.location.href = dest;
-        } else {
-            goto(dest);
-            drawerOpen = false;
-        }
-    }
-
     async function removeActiveLeague() {
         if (!$activeLeague) return;
-        
         const confirmed = confirm(`Are you sure you want to remove "${$activeLeague.league_name}" from your account?`);
         if (confirmed) {
             const { data: sessionData } = await supabase.auth.getSession();
             if (sessionData?.session?.user) {
-                
                 const { error } = await supabase
                     .from('user_leagues')
                     .delete()
@@ -50,237 +48,292 @@
     }
 </script>
 
-<svelte:head>
-    <link rel="stylesheet" href="/smui-dark.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;800;900&display=swap" rel="stylesheet">
-</svelte:head>
-
 <style>
-    :global(button.mdc-icon-button),
-    :global(.mdc-icon-button .material-icons) {
-        font-family: 'Material Icons' !important;
-        font-weight: normal !important;
-        text-transform: none !important;
-        letter-spacing: normal !important;
-        font-size: 28px !important; 
-        line-height: 1 !important;
+    /* Force body to accommodate fixed top and bottom bars natively */
+    :global(body) {
+        padding-top: 60px !important;
+        padding-bottom: 85px !important; /* Space for bottom nav */
     }
 
-    .left-controls {
+    /* --- TOP APP BAR --- */
+    .top-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: rgba(11, 14, 20, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         display: flex;
         align-items: center;
-        gap: 15px;
-        padding-left: 10px;
-        padding-top: 15px; 
-        z-index: 20;
+        justify-content: space-between;
+        padding: 0 20px;
+        padding-top: env(safe-area-inset-top);
+        z-index: 990;
+    }
+    
+    .league-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 800;
+        font-size: 1.1em;
+        color: #f8fafc;
+        letter-spacing: 0.5px;
     }
 
-    .league-select {
-        background: rgba(0, 0, 0, 0.5);
-        color: #f8fafc;
-        border: 1px solid rgba(238, 191, 28, 0.3);
-        border-radius: 8px;
-        padding: 8px 12px;
-        font-family: 'Montserrat', sans-serif;
-        font-size: 0.85em;
-        font-weight: 500;
-        text-transform: uppercase;
-        outline: none;
-        cursor: pointer;
-        backdrop-filter: blur(5px);
-        max-width: 150px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        transition: all 0.2s;
-    }
-    .league-select:hover {
-        border-color: rgba(238, 191, 28, 0.8);
-    }
-    .league-select option {
-        background: #0b0e14;
-        color: #f8fafc;
-        font-weight: 600;
+    .league-logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 2px solid var(--accent-secondary, #eebf1c);
+        object-fit: cover;
     }
 
-    .delete-btn {
+    .settings-btn {
         background: transparent;
         border: none;
-        color: #ef4444;
+        color: #94a3b8;
+        padding: 8px;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 4px;
-        border-radius: 50%;
-        transition: transform 0.2s, background-color 0.2s;
-        margin-left: -5px;
-    }
-    .delete-btn:hover {
-        background-color: rgba(239, 68, 68, 0.1);
-        transform: scale(1.1);
     }
 
-    .center-brand {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        top: 20px; 
+    /* --- BOTTOM NAV BAR --- */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 75px;
+        background: rgba(11, 14, 20, 0.95);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding-bottom: env(safe-area-inset-bottom);
+        z-index: 1000;
+    }
+
+    .nav-tab {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        gap: 4px;
+        flex: 1;
+        height: 100%;
+        color: #64748b;
         cursor: pointer;
-        gap: 10px;
-        z-index: 10;
-        text-align: center;
-        width: max-content;
+        transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        -webkit-tap-highlight-color: transparent;
     }
 
-    .header-logo {
-        height: 85px; 
-        width: 85px;  
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid var(--accent-secondary, #eebf1c);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
-        background-color: #111;
+    .nav-tab.active {
+        color: var(--accent-secondary, #eebf1c);
     }
 
-    .header-text {
-        font-family: 'Montserrat', sans-serif;
-        font-weight: 600;
-        color: #f8fafc;
-        letter-spacing: 3px;
+    .nav-icon {
+        font-size: 26px;
+    }
+
+    .nav-label {
+        font-size: 0.65em;
+        font-weight: 700;
         text-transform: uppercase;
-        font-size: 1.4em; 
-        text-shadow: 0 4px 10px rgba(0,0,0,0.8);
-        line-height: 1;
+        letter-spacing: 0.5px;
     }
 
-    :global(.mdc-drawer) {
-        background: #0b0e14 !important;
-        border-right: 1px solid var(--glass-border) !important;
-        box-shadow: 4px 0 20px rgba(0,0,0,0.5);
-        z-index: 1000 !important;
+    /* --- BOTTOM SHEET MENUS --- */
+    .scrim {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 995;
     }
-    
-    :global(.mdc-drawer__header) {
-        position: sticky !important;
-        top: 0 !important;
-        background: #0b0e14 !important;
-        z-index: 10 !important;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
-        padding: 15px !important;
+
+    .bottom-sheet {
+        position: fixed;
+        bottom: calc(75px + env(safe-area-inset-bottom));
+        left: 0;
+        right: 0;
+        background: #161c26;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px 24px 0 0;
+        padding: 25px 20px 20px;
+        z-index: 999;
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
     }
-    .drawer-header-content {
+
+    .sheet-header {
+        text-align: center;
+        color: #f8fafc;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 20px;
+        font-size: 0.9em;
+    }
+
+    /* Grid for League Hub Info */
+    .hub-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+    }
+
+    .hub-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 15px 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        color: #e2e8f0;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .hub-item:active {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--accent-secondary, #eebf1c);
+    }
+
+    .hub-item i {
+        font-size: 28px;
+        color: var(--accent-secondary, #eebf1c);
+    }
+
+    .hub-item span {
+        font-size: 0.75em;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    /* List for Settings Menu */
+    .settings-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .settings-select {
+        width: 100%;
+        padding: 15px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(238, 191, 28, 0.3);
+        border-radius: 12px;
+        color: #f8fafc;
+        font-size: 1em;
+        font-weight: 600;
+        outline: none;
+        appearance: none;
+    }
+
+    .settings-btn-action {
+        width: 100%;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border: none;
+        border-radius: 12px;
+        color: #f8fafc;
+        font-weight: 600;
+        font-size: 1em;
+        text-align: left;
         display: flex;
         align-items: center;
         gap: 15px;
     }
-
-    :global(.mdc-drawer-scrim) { z-index: 999 !important; }
-    :global(.mdc-top-app-bar) { z-index: 998 !important; }
-    :global(.mdc-drawer .mdc-list-item) { color: #f8fafc !important; }
-    :global(.mdc-drawer .mdc-list-item__graphic) { color: var(--accent-secondary) !important; }
-    :global(.mdc-drawer__title), :global(.mdc-drawer__subtitle) {
-        color: #f8fafc !important;
-        font-family: 'Montserrat', sans-serif !important;
-    }
     
-    :global(body) { padding-top: 165px !important; }
-    :global(.custom-top-bar.mdc-top-app-bar) { height: 150px !important; }
-    :global(.custom-row) { height: 100% !important; position: relative; }
-
-    @media (max-width: 600px) {
-        .header-logo { height: 60px; width: 60px; }
-        .header-text { font-size: 1.1em; letter-spacing: 2px; }
-        .league-select { max-width: 90px; padding: 6px; font-size: 0.7em; }
-        .left-controls { gap: 8px; padding-left: 5px; padding-top: 10px; }
-        :global(body) { padding-top: 135px !important; }
-        :global(.custom-top-bar.mdc-top-app-bar) { height: 120px !important; }
-    }
+    .settings-btn-action.danger { color: #ef4444; }
 </style>
 
-<TopAppBar class="custom-top-bar" variant="fixed" style="background: rgba(11, 14, 20, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border);">
-    
-    <div class="center-brand" onclick={() => navigate('/')}>
+<!-- TOP BAR -->
+<div class="top-bar">
+    <div class="league-brand">
         {#if $activeLeague?.logo_url}
-            <img src={$activeLeague.logo_url} alt="League Logo" class="header-logo" />
+            <img src={$activeLeague.logo_url} alt="Logo" class="league-logo"/>
         {/if}
-        <span class="header-text">{$activeLeague?.league_name || 'Huddle'}</span>
+        {$activeLeague?.league_name || 'Huddle'}
     </div>
+    <button class="settings-btn" onclick={() => { showSettingsMenu = !showSettingsMenu; showLeagueMenu = false; }}>
+        <i class="material-icons">settings</i>
+    </button>
+</div>
 
-    <Row class="custom-row">
-        <!-- Left Controls Only -->
-        <Section align="start" style="align-items: flex-start; height: 100%;">
-            <div class="left-controls">
-                <IconButton class="material-icons" onclick={() => drawerOpen = !drawerOpen} style="color: var(--accent-secondary);">menu</IconButton>
-                <select class="league-select" value={$activeLeague?.id || ''} onchange={handleLeagueSwitch}>
-                    <option value="" disabled>Switch</option>
-                    {#each $userLeaguesList as league}
-                        <option value={league.id}>{league.name}</option>
-                    {/each}
-                    <option value="ADD_NEW">+ Add New</option>
-                </select>
+<!-- SCRIM BACKDROP FOR MENUS -->
+{#if showLeagueMenu || showSettingsMenu}
+    <div class="scrim" transition:fade={{ duration: 200 }} onclick={() => { showLeagueMenu = false; showSettingsMenu = false; }}></div>
+{/if}
 
-                {#if $activeLeague}
-                    <button class="delete-btn" onclick={removeActiveLeague} title="Remove Active League">
-                        <span class="material-icons">delete</span>
-                    </button>
-                {/if}
-            </div>
-        </Section>
-    </Row>
-</TopAppBar>
-
-<Drawer variant="modal" bind:open={drawerOpen}>
-    <Header>
-        <div class="drawer-header-content">
-            <IconButton class="material-icons" onclick={() => drawerOpen = false} style="color: var(--accent-secondary); margin: 0;">menu</IconButton>
-            <div class="drawer-titles">
-                <Title style="font-weight: 800; text-transform: uppercase; margin: 0;">{$activeLeague?.league_name || 'Menu'}</Title>
-            </div>
+<!-- LEAGUE INFO BOTTOM SHEET -->
+{#if showLeagueMenu}
+    <div class="bottom-sheet" transition:slide={{ duration: 250 }}>
+        <div class="sheet-header">League Hub</div>
+        <div class="hub-grid">
+            {#each tabs.find(t => t.nest)?.children || [] as child}
+                <div class="hub-item" onclick={() => navigate(child.dest)}>
+                    <i class="material-icons">{child.icon}</i>
+                    <span>{child.label}</span>
+                </div>
+            {/each}
         </div>
-    </Header>
-    <Content>
-        <List>
-            {#each tabs as tab}
-                {#if !tab.nest && tab.label !== 'League Chat'}
-                    <Item href="javascript:void(0)" onSMUIAction={() => navigate(tab.dest)}>
-                        <Graphic class="material-icons" aria-hidden="true">{tab.icon}</Graphic>
-                        <Text>{tab.label}</Text>
-                    </Item>
-                {/if}
-            {/each}
-            
-            {#each tabs as tab}
-                {#if tab.nest}
-                    <Separator />
-                    <div style="color: var(--accent-secondary); font-size: 0.85em; font-weight: bold; padding: 15px 15px 5px; text-transform: uppercase;">{tab.label}</div>
-                    {#each tab.children as subTab}
-                        <Item href="javascript:void(0)" onSMUIAction={() => navigate(subTab.dest)}>
-                            <Graphic class="material-icons" aria-hidden="true">{subTab.icon}</Graphic>
-                            <Text>{subTab.label}</Text>
-                        </Item>
-                    {/each}
-                {/if}
-            {/each}
+    </div>
+{/if}
 
-            <Separator />
-            <div style="color: var(--text-muted); font-size: 0.85em; font-weight: bold; padding: 15px 15px 5px; text-transform: uppercase;">Account</div>
-            <Item href="javascript:void(0)" onSMUIAction={() => navigate('/settings')}>
-                <Graphic class="material-icons" aria-hidden="true">settings</Graphic>
-                <Text>Settings</Text>
-            </Item>
-            <Item href="javascript:void(0)" onSMUIAction={handleLogout}>
-                <Graphic class="material-icons" aria-hidden="true" style="color: #ff2a6d !important;">logout</Graphic>
-                <Text style="color: #ff2a6d !important;">Log Out</Text>
-            </Item>
+<!-- SETTINGS BOTTOM SHEET -->
+{#if showSettingsMenu}
+    <div class="bottom-sheet" transition:slide={{ duration: 250 }}>
+        <div class="sheet-header">Account & Settings</div>
+        <div class="settings-list">
             
-            <div style="height: 120px;"></div>
-        </List>
-    </Content>
-</Drawer>
+            <select class="settings-select" onchange={handleLeagueSwitch}>
+                <option value="" disabled selected>Switch Active League</option>
+                {#each $userLeaguesList as league}
+                    <option value={league.id} selected={$activeLeague?.id === league.id}>
+                        {league.name} {league.is_commissioner ? '(Commish)' : ''}
+                    </option>
+                {/each}
+                <option value="ADD_NEW">+ Connect Another League</option>
+            </select>
 
-<AppContent>
-    <slot />
-</AppContent>
+            <button class="settings-btn-action" onclick={() => navigate('/settings')}>
+                <i class="material-icons">edit</i> Edit Hub Settings
+            </button>
+            
+            <button class="settings-btn-action danger" onclick={removeActiveLeague}>
+                <i class="material-icons">delete_outline</i> Disconnect League
+            </button>
+            
+            <button class="settings-btn-action danger" onclick={handleLogout}>
+                <i class="material-icons">logout</i> Log Out
+            </button>
+        </div>
+    </div>
+{/if}
+
+<!-- BOTTOM NAV BAR -->
+<div class="bottom-nav">
+    {#each tabs as tab}
+        {#if !tab.nest}
+            <div class="nav-tab" class:active={$page.url.pathname === tab.dest} onclick={() => navigate(tab.dest)}>
+                <i class="material-icons nav-icon">{tab.icon}</i>
+                <span class="nav-label">{tab.label}</span>
+            </div>
+        {:else}
+            <!-- League Info Menu Toggle -->
+            <div class="nav-tab" class:active={showLeagueMenu} onclick={() => { showLeagueMenu = !showLeagueMenu; showSettingsMenu = false; }}>
+                <i class="material-icons nav-icon">{tab.icon}</i>
+                <span class="nav-label">{tab.label}</span>
+            </div>
+        {/if}
+    {/each}
+</div>
