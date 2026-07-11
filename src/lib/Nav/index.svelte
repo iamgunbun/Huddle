@@ -6,11 +6,11 @@
     import { page } from '$app/stores';
     import { slide, fade } from 'svelte/transition';
 
-    let innerWidth = 0;
-    $: isMobile = innerWidth <= 768;
+    let innerWidth = $state(0);
+let isMobile = $derived(innerWidth <= 768);
 
-    let drawerOpen = false;
-    let mobileSubMenuOpen = false;
+let drawerOpen = $state(false);
+let mobileSubMenuOpen = $state(false);
 
     function navigate(dest) {
         drawerOpen = false;

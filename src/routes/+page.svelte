@@ -16,7 +16,7 @@
     
     // Mobile Detection
     let innerWidth = $state(0);
-    $: isMobile = innerWidth <= 1100;
+    let isMobile = $derived(innerWidth <= 1100);
     
     // Pop-in States
     let showProjections = $state(false);
