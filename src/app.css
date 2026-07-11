@@ -1,15 +1,12 @@
 body {
-    /* 1. Stop the web page from "bouncing" when you scroll past the top/bottom */
-    overscroll-behavior-y: none;
-    
-    /* 2. Prevent accidental text highlighting when users tap quickly */
+    /* 1. Prevent accidental text highlighting when users tap quickly */
     user-select: none;
     -webkit-user-select: none;
     
-    /* 3. Remove the ugly blue box that flashes when you tap a button on Android */
+    /* 2. Remove the ugly blue box that flashes when you tap a button on Android */
     -webkit-tap-highlight-color: transparent;
 
-    /* 4. Respect the iPhone Notch and Android camera cutouts */
+    /* 3. Respect the iPhone Notch and Android camera cutouts */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);

@@ -51,7 +51,7 @@
                 <div 
                     in:fly={{ x: 50, duration: 250, delay: 100 }} 
                     out:fade={{ duration: 100 }}
-                    style="width: 100%; height: 100%;"
+                    style="width: 100%;"
                 >
                     <slot />
                 </div>
@@ -73,6 +73,7 @@
         padding: 0;
         min-height: 100vh; 
         overflow-x: hidden; 
+        overflow-y: auto; /* Explicitly re-enable vertical scrolling */
         background: radial-gradient(circle at top right, #1a2332 0%, #0b0e14 80%) !important;
         background-attachment: fixed !important; 
         color: #f8fafc !important; 
@@ -96,7 +97,6 @@
     .content { 
         flex: 1; 
         padding-bottom: 20px; 
-        overflow-x: hidden; /* Prevents scrollbars during page sliding */
     }
     
     :global(.bar) {
