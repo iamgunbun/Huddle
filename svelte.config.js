@@ -1,13 +1,18 @@
-import vercel from '@sveltejs/adapter-vercel';
-import node from '@sveltejs/adapter-node';
-
-const dockerBuild = process.env.DOCKER_BUILD
+import adapter from '@sveltejs/adapter-static';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	kit: {
-		adapter: dockerBuild ? node() : vercel(),
-	}
+    kit: {
+        adapter: adapter({
+            // default options are shown. On some platforms
+            // these options are set automatically — see below
+            pages: 'build',
+            assets: 'build',
+            fallback: 'index.html', // This is crucial for Capacitor SPA routing
+            precompress: false,
+            strict: true
+        })
+    }
 };
 
 export default config;

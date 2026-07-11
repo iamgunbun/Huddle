@@ -1,27 +1,26 @@
 <script>
+    import '../app.css';
     import { onMount } from 'svelte';
     import { supabase } from '$lib/supabaseClient';
     import { loadLeagueContext, activeLeague } from '$lib/stores/leagueContext.js';
     import { goto } from '$app/navigation';
-    import { page } from '$app/stores'; 
+    import { page } from '$app/stores';
+    import { fly, fade } from 'svelte/transition';
 
     import { Nav } from '$lib/components';
-    import GlobalChat from '$lib/components/GlobalChat.svelte'; 
+    import GlobalChat from '$lib/components/GlobalChat.svelte';
 
     let loading = true;
     let session = null;
-
     onMount(async () => {
         const { data } = await supabase.auth.getSession();
         session = data.session;
-
         if (session) {
             await loadLeagueContext(session.user.id);
         } else if (window.location.pathname !== '/login' && !window.location.pathname.startsWith('/invite')) {
             goto('/login');
         }
         loading = false;
-
         supabase.auth.onAuthStateChange(async (_event, _session) => {
             session = _session;
             if (session) {
@@ -47,11 +46,17 @@
         {#if session && $page.url.pathname !== '/login' && !$page.url.pathname.startsWith('/invite')}
             <Nav />
         {/if}
-
         <main class="content">
-            <slot />
+            {#key $page.url.pathname}
+                <div 
+                    in:fly={{ x: 50, duration: 250, delay: 100 }} 
+                    out:fade={{ duration: 100 }}
+                    style="width: 100%; height: 100%;"
+                >
+                    <slot />
+                </div>
+            {/key}
         </main>
-
         {#if session && $page.url.pathname !== '/login' && !$page.url.pathname.startsWith('/invite')}
             <GlobalChat />
         {/if}
@@ -61,8 +66,8 @@
 <style>
     /* =================================================================
        GLOBAL SLEEKNESS & SEAMLESS BACKGROUND OVERRIDES 
-       ================================================================= */
-       
+    ================================================================= */
+    
     :global(html), :global(body) { 
         margin: 0; 
         padding: 0;
@@ -88,8 +93,12 @@
         background: transparent !important; 
     }
     
-    .content { flex: 1; padding-bottom: 20px; }
-       
+    .content { 
+        flex: 1; 
+        padding-bottom: 20px; 
+        overflow-x: hidden; /* Prevents scrollbars during page sliding */
+    }
+    
     :global(.bar) {
         background: linear-gradient(90deg, rgba(238, 191, 28, 0.7), rgba(238, 191, 28, 1)) !important;
         border-radius: 8px !important;
@@ -103,7 +112,6 @@
         border-color: rgba(255,255,255,0.1) !important;
         box-shadow: none !important;
     }
-
     :global(.transaction), :global(.tradeTransaction), :global(.waiverTransaction), :global(.transaction-item) {
         background: rgba(255, 255, 255, 0.02) !important;
         backdrop-filter: blur(12px) !important;
@@ -114,7 +122,6 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
         color: #f8fafc !important;
     }
-
     /* Golden Borders for ALL Cards */
     :global(.roster), :global(.standings-row), :global(.record-card), :global(.league-info-container),
     :global(.record-table), :global(.leaderboard-container), :global(.draft-board-container), :global(.draft-container) {
@@ -126,11 +133,9 @@
         padding: 20px !important;
         margin-bottom: 15px !important;
     }
-
     /* =================================================================
        PAGE SPECIFIC FIXES (RECORDS & DRAFTS)
-       ================================================================= */
-
+    ================================================================= */
     /* 1. Records Table Spacing Compression */
     :global(.record-table td), :global(.record-table th) {
         padding: 10px 15px !important; /* Drastically reduces the massive gaps */
@@ -141,7 +146,6 @@
     :global(.record-table td > div) {
         margin: 4px 0 !important; /* Compresses nested items inside the records */
     }
-
     /* 2. Draft Board Centering & Size Overrides */
     :global(.draft-board) {
         min-height: 75vh !important; 
@@ -174,7 +178,6 @@
         font-size: 0.85em !important;
         margin: 0 !important;
     }
-
     /* General Table Typography */
     :global(td), :global(th) {
         color: #f8fafc !important;
