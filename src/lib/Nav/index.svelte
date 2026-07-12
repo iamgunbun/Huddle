@@ -7,10 +7,10 @@
     import { slide, fade } from 'svelte/transition';
 
     let innerWidth = $state(0);
-let isMobile = $derived(innerWidth <= 768);
+    let isMobile = $derived(innerWidth <= 768);
 
-let drawerOpen = $state(false);
-let mobileSubMenuOpen = $state(false);
+    let drawerOpen = $state(false);
+    let mobileSubMenuOpen = $state(false);
 
     function navigate(dest) {
         drawerOpen = false;
@@ -173,7 +173,7 @@ let mobileSubMenuOpen = $state(false);
     <div class="scrim" transition:fade={{duration: 200}} onclick={() => drawerOpen = false}></div>
     <div class="drawer" transition:slide={{axis: 'x', duration: 250}}>
         <div class="drawer-header">
-            <h3>{isMobile ? 'Your Leagues' : 'Navigation'}</h3>
+            <h3>{isMobile ? 'Your Leagues' : 'Hub Navigation'}</h3>
             <button class="close-btn" onclick={() => drawerOpen = false}><i class="material-icons">close</i></button>
         </div>
 

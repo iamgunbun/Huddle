@@ -51,6 +51,7 @@
         font-weight: 800;
         font-size: 0.75em;
         color: #111;
+        margin-left: 12px;
     }
 
     /* Position Colors perfectly matched to your Rosters tab */

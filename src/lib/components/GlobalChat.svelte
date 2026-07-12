@@ -1,8 +1,8 @@
 <script>
     import { onMount, onDestroy } from 'svelte';
-    import IconButton from '@smui/icon-button';
     import { activeLeague } from '$lib/stores/leagueContext';
     import { supabase } from '$lib/supabaseClient';
+    import { getLeagueTeamManagers } from '$lib/utils/helper';
 
     let chatOpen = $state(false);
     let messages = $state([]);
@@ -67,11 +67,29 @@
 
     async function loadTeamNames() {
         const { data } = await supabase.from('user_leagues').select('user_id, team_name').eq('league_id', activeChannelId);
+        
+        // Grab the Sleeper API roster data we already have cached in the app
+        const managersData = await getLeagueTeamManagers(); 
+
         if (data) {
             const map = {};
             data.forEach(user => {
-                // Fetch the mapped team name, default to Unknown Team if DB column is blank
-                map[user.user_id] = (user.team_name && user.team_name.trim() !== '') ? user.team_name : 'Unknown Team';
+                let name = (user.team_name && user.team_name.trim() !== '') ? user.team_name : 'Unknown Team';
+                let avatar = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+
+                // Cross-reference the Supabase team name with the Sleeper User to grab their avatar
+                if (managersData && managersData.users) {
+                    for (const sUserId in managersData.users) {
+                        const sUser = managersData.users[sUserId];
+                        const sName = sUser.metadata?.team_name || sUser.display_name;
+                        if (sName === name) {
+                            avatar = sUser.metadata?.avatar || `https://sleepercdn.com/avatars/thumbs/${sUser.avatar}`;
+                            break;
+                        }
+                    }
+                }
+
+                map[user.user_id] = { name, avatar };
             });
             teamMap = map;
         }
@@ -87,7 +105,8 @@
             messages = data.map(msg => ({
                 id: msg.id,
                 user_id: msg.user_id,
-                sender: msg.user_id === currentUser.id ? 'You' : (teamMap[msg.user_id] || 'Unknown Team'),
+                sender: msg.user_id === currentUser.id ? 'You' : (teamMap[msg.user_id]?.name || 'Unknown Team'),
+                avatar: teamMap[msg.user_id]?.avatar || 'https://sleepercdn.com/images/v2/icons/player_default.webp',
                 text: msg.text_content || msg.media_url,
                 type: msg.media_url ? (msg.media_url.includes('giphy') || msg.media_url.includes('tenor') ? 'gif' : 'image') : 'text'
             }));
@@ -115,7 +134,8 @@
                 const newMsgObj = {
                     id: msg.id,
                     user_id: msg.user_id,
-                    sender: msg.user_id === currentUser?.id ? 'You' : (teamMap[msg.user_id] || 'Unknown Team'),
+                    sender: msg.user_id === currentUser?.id ? 'You' : (teamMap[msg.user_id]?.name || 'Unknown Team'),
+                    avatar: teamMap[msg.user_id]?.avatar || 'https://sleepercdn.com/images/v2/icons/player_default.webp',
                     text: msg.text_content || msg.media_url,
                     type: msg.media_url ? (msg.media_url.includes('giphy') || msg.media_url.includes('tenor') ? 'gif' : 'image') : 'text'
                 };
@@ -176,6 +196,7 @@
                 id: data.id,
                 user_id: data.user_id,
                 sender: 'You',
+                avatar: teamMap[currentUser.id]?.avatar || 'https://sleepercdn.com/images/v2/icons/player_default.webp',
                 text: data.text_content || data.media_url,
                 type: data.media_url ? (data.media_url.includes('giphy') || data.media_url.includes('tenor') ? 'gif' : 'image') : 'text'
             };
@@ -258,16 +279,68 @@
         box-shadow: 0 10px 40px rgba(0,0,0,0.7); overflow: hidden;
     }
 
-    .messages-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+    .chat-header {
+        padding: 15px 20px; 
+        border-bottom: 1px solid rgba(255,255,255,0.1); 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        background: rgba(0,0,0,0.3);
+    }
+
+    .close-btn {
+        background: transparent; 
+        border: none; 
+        color: #ef4444; 
+        cursor: pointer; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        padding: 4px;
+        border-radius: 50%;
+        transition: 0.2s;
+    }
+
+    .close-btn:hover {
+        background: rgba(239, 68, 68, 0.15);
+    }
+
+    .messages-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 16px; }
     
+    .message-row {
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+        width: 100%;
+    }
+    
+    .message-row.own {
+        justify-content: flex-end;
+    }
+
+    .chat-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        background: #111;
+        border: 1px solid rgba(238, 191, 28, 0.3);
+        flex-shrink: 0;
+    }
+
     .message-bubble {
         background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-        padding: 10px 14px; border-radius: 12px; font-size: 0.9em; width: max-content; max-width: 85%;
+        padding: 10px 14px; border-radius: 16px 16px 16px 4px; font-size: 0.9em; width: max-content; max-width: 80%;
         word-wrap: break-word; white-space: pre-wrap;
     }
+    
     .message-bubble.own {
         background: rgba(238, 191, 28, 0.1); border-color: rgba(238, 191, 28, 0.3);
-        align-self: flex-end;
+        border-radius: 16px 16px 4px 16px;
+    }
+
+    .sender-name {
+        font-size: 0.75em; color: #94a3b8; font-weight: bold; margin-bottom: 4px;
     }
     
     .media-img { max-width: 100%; border-radius: 8px; margin-top: 5px; }
@@ -309,24 +382,38 @@
 
 {#if chatOpen}
     <div class="chat-window">
-        <div style="padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3);">
-            <span style="color: var(--accent-secondary); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+        <div class="chat-header">
+            <span style="color: var(--accent-secondary); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9em;">
                 {$activeLeague?.league_name || 'Huddle Chat'}
             </span>
-            <IconButton class="material-icons" onclick={() => chatOpen = false} style="color: #ef4444; margin: -10px;">close</IconButton>
+            <button class="close-btn" onclick={() => chatOpen = false}>
+                <i class="material-icons">close</i>
+            </button>
         </div>
 
         <div class="messages-area" bind:this={chatContainer}>
             {#each messages as msg}
-                <div class="message-bubble {msg.sender === 'You' ? 'own' : ''}">
-                    <div style="font-size: 0.75em; color: #94a3b8; font-weight: bold; margin-bottom: 4px;">{msg.sender}</div>
-                    {#if msg.type === 'image'}
-                        <img src={msg.text} class="media-img" alt="Uploaded Media" />
-                    {:else if msg.type === 'gif'}
-                        <img src={msg.text} class="media-img" alt="GIF" />
-                    {:else}
-                        {msg.text}
+                <div class="message-row {msg.sender === 'You' ? 'own' : ''}">
+                    
+                    <!-- Only show avatar for other users -->
+                    {#if msg.sender !== 'You'}
+                        <img class="chat-avatar" src={msg.avatar} alt="avatar" />
                     {/if}
+
+                    <div class="message-bubble {msg.sender === 'You' ? 'own' : ''}">
+                        {#if msg.sender !== 'You'}
+                            <div class="sender-name">{msg.sender}</div>
+                        {/if}
+
+                        {#if msg.type === 'image'}
+                            <img src={msg.text} class="media-img" alt="Uploaded Media" />
+                        {:else if msg.type === 'gif'}
+                            <img src={msg.text} class="media-img" alt="GIF" />
+                        {:else}
+                            {msg.text}
+                        {/if}
+                    </div>
+
                 </div>
             {/each}
         </div>

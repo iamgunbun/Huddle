@@ -8,8 +8,8 @@ export const tabs = [
         nest: true,
         key: 'league_info',
         children: [
-            { icon: 'storage', label: 'Rosters', dest: '/rosters' },
-            { icon: 'people', label: 'Managers', dest: '/managers' }, // Added Managers Back
+            { icon: 'storage', label: 'Teams', dest: '/rosters' },
+            { icon: 'people', label: 'Managers', dest: '/managers' },
             { icon: 'local_fire_department', label: 'Rivalry', dest: '/rivalry' },
             { icon: 'leaderboard', label: 'Standings', dest: '/standings' },
             { icon: 'view_comfy', label: 'Drafts', dest: '/drafts' },
